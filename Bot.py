@@ -3,6 +3,7 @@ import os, time
 from selenium import webdriver
 import re
 from bs4 import BeautifulSoup
+import yaml
 
 cwd = os.getcwd() + '/'
 driver = webdriver.Chrome(cwd + 'chromedriver')
@@ -16,18 +17,23 @@ submit = driver.find_element_by_name("submit")
 fuckingShit = driver.find_elements_by_class_name("alignRight")
 code = fuckingShit[2].text
 a = re.findall(re.compile(r"\d+"), code)
-print a
 ans = int(a[0]) + int(a[1])
 
+with open("config.yml", "r") as ymlfile:
+        cfg = yaml.load(ymlfile)
+cfgUsername = cfg['account']['username']
+cfgPassword = cfg['account']['password']
+cfgShop = cfg['order']['shop']
+cfgDish = cfg['order']['dish']
 
-username.send_keys("jjjabc")
-password.send_keys("jjjabc")
+username.send_keys(cfgUsername)
+password.send_keys(cfgPassword)
 result.send_keys(ans)
 submit.click()
 
 code = BeautifulSoup(driver.page_source.encode('utf-8','replace'))
 try:
-        tmp = code.find_all(string=re.compile(u"卜派羹麵"))
+        tmp = code.find_all(string=re.compile(cfgShop))
 except IndexError, e:
         # if popeye doesnt exist
         # then you can only eat shit by yourself
@@ -41,7 +47,13 @@ for i in tmp:
 
 driver.get(url)
 code = BeautifulSoup(driver.page_source.encode('utf-8','replace'))
-noodleId = code.find_all(string=re.compile(u"麻辣乾麵"))[0].parent.parent.parent.find(class_='qty').get('id')
+
+try:
+        noodleId = code.find_all(string=re.compile(cfgDish))[0].parent.parent.parent.find(class_='qty').get('id')
+except IndexError, e:
+        print "we dont have fucking ", cfgDish, " ok?"
+        exit(1)
+
 number = driver.find_element_by_id(noodleId)
 number.send_keys("1")
 person = driver.find_element_by_name("fallbackBox:buyerBuilder.playedName")
